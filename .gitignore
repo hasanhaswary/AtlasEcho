@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build & Output
+dist/
+build/
+out/
+/.vite
+/.cache
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Database & Temp Files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+prisma/dev.db
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# IDEs & Code Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
