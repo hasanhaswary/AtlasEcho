@@ -1,0 +1,15 @@
+### AtlasEcho Users API Tests
+
+### 1. Get User Profile & Travelogue
+GET http://localhost:3000/api/users/SOME_USER_ID
+
+### 2. Follow / Unfollow User
+POST http://localhost:3000/api/users/SOME_USER_ID/follow
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 3. Get User Notifications ("Incoming Echoes")
+GET http://localhost:3000/api/users/notifications/all
+Authorization: Bearer YOUR_TOKEN_HERE
+
+### 4. Fetch Weather for Coordinates
+GET http://localhost:3000/api/weather?lat=45.9237&lng=6.8694

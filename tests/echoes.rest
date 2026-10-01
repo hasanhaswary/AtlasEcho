@@ -1,0 +1,34 @@
+### AtlasEcho Echoes (Posts/Memories) API Tests
+
+### 1. Fetch all local echoes
+GET http://localhost:3000/api/echoes?feed=local
+
+### 2. Radius search echoes near Positano
+GET http://localhost:3000/api/echoes?lat=40.6281&lng=14.4850&radius=10
+
+### 3. Search echoes by keyword
+GET http://localhost:3000/api/echoes?search=coffee
+
+### 4. Fetch single echo by ID
+GET http://localhost:3000/api/echoes/SOME_ECHO_ID
+
+### 5. Drop new echo memory
+POST http://localhost:3000/api/echoes
+Authorization: Bearer YOUR_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "title": "Secret Grotto Overlook",
+  "content": "Discovered a hidden stone archway looking over the cliffside.",
+  "locationName": "Ravello, Italy",
+  "latitude": 40.6489,
+  "longitude": 14.6119,
+  "weatherTemp": "76°F",
+  "weatherCondition": "Clear",
+  "weatherIcon": "sun",
+  "tags": "#Cliffside #Ravello"
+}
+
+### 6. Toggle Like on Echo
+POST http://localhost:3000/api/echoes/SOME_ECHO_ID/like
+Authorization: Bearer YOUR_TOKEN_HERE

@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(uuid())
+  username         String    @unique @default("explorer")
+  email            String    @unique
+  password         String
+  fullName         String
+  displayName      String
+  bio              String?   @default("Searching for the hidden melodies of forgotten places.")
+  avatarUrl        String?   @default("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80")
+  bannerUrl        String?   @default("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1200&q=80")
+  badges           String?   @default("#GlobalExplorer #MemoryKeeper")
+  totalMiles       Float     @default(12480)
+  countriesCount   Int       @default(14)
+  publicVisibility Boolean   @default(true)
+  distanceUnits    String    @default("Miles")
+  temperatureUnits String    @default("Celsius")
+  mapStyle         String    @default("Nostalgic Ink")
+  twoFactorEnabled Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  echoes           Echo[]
+  comments         Comment[]
+  likes            Like[]
+  notifications    Notification[]
+  
+  followers        Follow[]  @relation("UserFollowers")
+  following        Follow[]  @relation("UserFollowing")
+}
+
+model Echo {
+  id               String    @id @default(uuid())
+  title            String
+  content          String
+  locationName     String
+  latitude         Float
+  longitude        Float
+  imageUrl         String?
+  weatherTemp      String?   @default("72°F")
+  weatherCondition String?   @default("Clear")
+  weatherIcon      String?   @default("sun")
+  isTimeCapsule    Boolean   @default(false)
+  unlockDate       DateTime?
+  isLocked         Boolean   @default(false)
+  tags             String?   @default("#Nostalgic")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  authorId         String
+  author           User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  comments         Comment[]
+  likes            Like[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+  
+  echoId    String
+  echo      Echo     @relation(fields: [echoId], references: [id], onDelete: Cascade)
+  
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  parentId  String?
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  echoId    String
+  echo      Echo     @relation(fields: [echoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, echoId])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+
+  followerId  String
+  follower    User     @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+
+  followingId String
+  following   User     @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model Notification {
+  id            String   @id @default(uuid())
+  type          String   // "time_capsule", "echo_nearby", "like", "follow", "highlight"
+  title         String
+  message       String
+  read          Boolean  @default(false)
+  relatedEchoId String?
+  createdAt     DateTime @default(now())
+
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

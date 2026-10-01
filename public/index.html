@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AtlasEcho - Location-Based Social Memories</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- App Custom CSS -->
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <div id="app-container">
+
+    <!-- Top Header Bar -->
+    <header class="header-bar">
+      <div class="brand-logo-group" id="header-brand-btn" style="cursor: pointer;">
+        <svg class="brand-logo-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="90" stroke="#002045" stroke-width="8" stroke-dasharray="12 12"/>
+          <circle cx="100" cy="100" r="70" stroke="#715c00" stroke-width="6" stroke-dasharray="8 8"/>
+          <circle cx="100" cy="100" r="50" stroke="#002045" stroke-width="4"/>
+          <path d="M100 45C70 45 45 70 45 100C45 135 100 170 100 170C100 170 155 135 155 100C155 70 130 45 100 45ZM100 120C88.95 120 80 111.05 80 100C80 88.95 88.95 80 100 80C111.05 80 120 88.95 120 100C120 111.05 111.05 120 100 120Z" fill="#002045"/>
+          <circle cx="100" cy="178" r="6" fill="#f47d45"/>
+        </svg>
+        <span class="brand-title">AtlasEcho</span>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="btn-toggle-search" title="Search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+        <button class="icon-btn" id="btn-header-notifs" title="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+          <span class="badge-dot" id="notif-unread-dot"></span>
+        </button>
+        <button class="icon-btn" id="btn-header-avatar" title="Traveler Passport" style="overflow: hidden;">
+          <img id="header-user-avatar-img" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" style="width: 100%; height: 100%; object-fit: cover;" alt="Avatar" />
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area with Dynamic Views -->
+    <main id="main-content">
+
+      <!-- VIEW 1: DISCOVERY (Interactive Location Map & Nearby Echoes) -->
+      <section id="view-discovery" class="page-view active">
+        
+        <!-- Search bar -->
+        <div class="search-container">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="map-search-input" class="search-input" placeholder="Search echoes, places, or friends..." />
+          <button class="filter-icon-btn" id="btn-map-filter" title="Filter Echoes">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+            <span id="filter-badge" style="display: none; position: absolute; top: -1px; right: -1px; width: 8px; height: 8px; background: var(--color-primary); border-radius: 50%;"></span>
+          </button>
+        </div>
+
+        <!-- Interactive Map Container -->
+        <div class="map-canvas-container">
+          <div id="map"></div>
+          <div class="map-radar-ring" style="width: 140px; height: 140px;"></div>
+          <div class="map-radar-ring" style="width: 220px; height: 220px; animation-delay: 1s;"></div>
+        </div>
+
+        <!-- Location Filter Pill Header -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px; background: var(--color-surface-container-low); padding: 6px 14px; border-radius: var(--radius-full); font-size: 13px; font-weight: 600; color: var(--color-primary);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+            <span id="discovery-radius-label">Echoes within 5 miles</span>
+          </div>
+          <button id="btn-view-all-nearby" style="font-size: 13px; font-weight: 700; color: var(--color-primary);">View All</button>
+        </div>
+
+        <!-- Nearby Echo Cards Stream -->
+        <div id="nearby-echoes-container">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- VIEW 2: ECHOES SOCIAL FEED (Local vs Following Timeline) -->
+      <section id="view-feed" class="page-view">
+        
+        <!-- Feed Toggle Tabs -->
+        <div class="segmented-control" style="max-width: 280px; margin: 0 auto 18px auto;">
+          <button class="tab-btn active" id="tab-feed-local" onclick="switchFeedTab('local')">Local</button>
+          <button class="tab-btn" id="tab-feed-following" onclick="switchFeedTab('following')">Following</button>
+        </div>
+
+        <!-- Feed List -->
+        <div id="feed-echoes-container">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- VIEW 3: INCOMING ECHOES (Notifications) -->
+      <section id="view-notifications" class="page-view">
+        <h2 style="font-size: 22px; font-weight: 700; margin-bottom: 16px;">Incoming Echoes</h2>
+
+        <div class="segmented-control" style="margin-bottom: 16px;">
+          <button class="tab-btn active" id="tab-notif-all" onclick="filterNotifs('all')">All</button>
+          <button class="tab-btn" id="tab-notif-interactions" onclick="filterNotifs('interactions')">Interactions</button>
+        </div>
+
+        <div id="notifications-list-container">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- VIEW 4: TRAVELER CREDENTIALS & PROFILE -->
+      <section id="view-profile" class="page-view">
+        <div class="profile-header-card">
+          <img id="profile-avatar" class="profile-avatar-lg" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80" alt="Profile" />
+          <h2 id="profile-display-name" class="profile-name">Julian Echo</h2>
+          <div id="profile-username" style="font-size: 13px; color: var(--color-outline); font-weight: 600; margin-top: -4px; margin-bottom: 6px;">@julian_thorne</div>
+          <div id="profile-badges" style="display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin-bottom: 8px; max-width: 100%;">
+            <span class="badge-gold">Top 5% Explorer</span>
+            <span class="tag-pill">#GlobalExplorer</span>
+          </div>
+          <p id="profile-bio-text" class="profile-bio">Mapping the world one vintage bookstore and hidden coastal trail at a time.</p>
+
+          <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 16px;">
+            <button class="btn-icon-action" id="btn-open-settings" onclick="openSettingsModal()" title="Expedition Settings" aria-label="Expedition Settings" style="width: 38px; height: 38px; border-radius: 50%; background-color: var(--color-primary); color: #ffffff; display: inline-flex; align-items: center; justify-content: center; border: none; cursor: pointer; transition: transform 0.15s ease;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+            <button class="btn-icon-action" id="btn-share-profile" title="Share Footprints" aria-label="Share Footprints" style="width: 38px; height: 38px; border-radius: 50%; background-color: var(--color-surface-container); color: var(--color-primary); display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); cursor: pointer; transition: transform 0.15s ease;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </button>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-icon">🧭</div>
+              <div class="stat-val" id="stat-miles">12,480</div>
+              <div class="stat-lbl">Miles Traveled</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-icon">📍</div>
+              <div class="stat-val" id="stat-memories">142</div>
+              <div class="stat-lbl">Echoes Dropped</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-icon">👥</div>
+              <div class="stat-val" id="stat-followers">3.2k</div>
+              <div class="stat-lbl">Followers</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Travelogue Section -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h3 style="font-size: 18px; font-weight: 700;">Travelogue</h3>
+          <div class="segmented-control" style="margin-bottom: 0;">
+            <button class="tab-btn active" id="tab-mode-grid" onclick="switchTravelogueMode('grid')">Grid</button>
+            <button class="tab-btn" id="tab-mode-timeline" onclick="switchTravelogueMode('timeline')">Timeline</button>
+          </div>
+        </div>
+
+        <div id="user-travelogue-container">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- VIEW 5: AUTH (Sign In / Register) -->
+      <section id="view-auth" class="page-view">
+        <div style="text-align: center; padding: 24px 0 16px 0;">
+          <svg class="brand-logo-svg" style="width: 64px; height: 64px; margin-bottom: 12px;" viewBox="0 0 200 200" fill="none">
+            <circle cx="100" cy="100" r="90" stroke="#002045" stroke-width="8" stroke-dasharray="12 12"/>
+            <circle cx="100" cy="100" r="70" stroke="#715c00" stroke-width="6" stroke-dasharray="8 8"/>
+            <path d="M100 45C70 45 45 70 45 100C45 135 100 170 100 170C100 170 155 135 155 100C155 70 130 45 100 45ZM100 120C88.95 120 80 111.05 80 100C80 88.95 88.95 80 100 80C111.05 80 120 88.95 120 100C120 111.05 111.05 120 100 120Z" fill="#002045"/>
+          </svg>
+          <h2 id="auth-title" style="font-size: 26px; font-weight: 700;">Welcome Back, Traveler</h2>
+          <p id="auth-subtitle" style="font-size: 13px; color: var(--color-on-surface-variant); max-width: 280px; margin: 4px auto 20px auto;">Your field journal is waiting for the next memory.</p>
+        </div>
+
+        <form id="auth-form" style="background: #ffffff; padding: 20px; border-radius: var(--radius-xl); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);">
+          
+          <div class="form-group" id="group-fullname" style="display: none;">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="auth-fullname" class="form-control" placeholder="E.g. Marco Polo" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="auth-email" class="form-control" placeholder="explorer@atlas.com" required value="julian@atlas.com" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="auth-password" class="form-control" placeholder="••••••••" required value="password123" />
+          </div>
+
+          <button type="submit" class="btn-primary-block" id="btn-auth-submit">Begin Journey 🧭</button>
+        </form>
+
+        <div style="text-align: center; margin-top: 16px;">
+          <button id="btn-toggle-auth-mode" style="font-size: 13px; font-weight: 600; color: var(--color-secondary);">New to the expedition? Join AtlasEcho</button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Floating Action Button: Drop Echo -->
+    <button class="fab-drop-echo" id="btn-open-create-modal" title="Drop Memory" aria-label="Drop Memory">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+
+    <!-- Bottom Navigation Dock -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" onclick="switchNav('discovery')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+        <span>Discovery</span>
+      </button>
+
+      <button class="nav-item" onclick="switchNav('feed')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+        <span>Echoes</span>
+      </button>
+
+      <button class="nav-item" onclick="switchNav('profile')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profile</span>
+      </button>
+    </nav>
+
+    <!-- CREATE ECHO MODAL -->
+    <div class="modal-overlay" id="modal-create-echo">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 style="font-size: 20px; font-weight: 700;">Create Echo</h2>
+          <button class="modal-close-btn" onclick="closeCreateModal()">✕</button>
+        </div>
+        <p style="font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 16px;">Leave a digital echo in this physical space for others—or your future self—to discover.</p>
+
+        <form id="form-create-echo">
+          
+          <div class="form-group">
+            <label class="form-label">Echo Title</label>
+            <input type="text" id="create-title" class="form-control" placeholder="E.g. Chamonix Ridge Ascent" required />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Location Name</label>
+            <input type="text" id="create-location" class="form-control" placeholder="Chamonix, France" required value="Chamonix, France" />
+          </div>
+
+          <!-- Weather auto-badge preview -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: var(--color-surface-container-low); padding: 10px 14px; border-radius: var(--radius-md); margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600;">
+              <span id="create-weather-icon">❄️</span>
+              <span id="create-weather-text">34°F Snowing</span>
+            </div>
+            <button type="button" id="btn-fetch-live-weather" style="font-size: 11px; font-weight: 700; color: var(--color-secondary);">Auto-Fetch Weather</button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Your Story</label>
+            <textarea id="create-content" class="form-control" rows="4" placeholder="The air here is crisp, almost sharp. We stopped at this ridge..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Attach Photo</label>
+            
+            <input type="hidden" id="create-image-url" value="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80" />
+            <input type="file" id="input-photo-gallery" accept="image/*" style="display: none;" />
+            <input type="file" id="input-photo-camera" accept="image/*" capture="environment" style="display: none;" />
+
+            <!-- Photo options selector -->
+            <div class="photo-picker-actions">
+              <button type="button" class="btn-photo-opt" id="btn-take-photo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                <span>Take Photo</span>
+              </button>
+              <button type="button" class="btn-photo-opt" id="btn-choose-gallery">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span>From Gallery</span>
+              </button>
+            </div>
+
+            <!-- Image preview box -->
+            <div class="photo-preview-container" id="photo-preview-box">
+              <img id="photo-preview-img" src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80" alt="Preview" />
+              <button type="button" class="btn-remove-photo" id="btn-remove-photo" title="Remove photo">✕</button>
+            </div>
+          </div>
+
+          <!-- Time Capsule Toggle -->
+          <div class="switch-row">
+            <div>
+              <div style="font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                <span>🔒 Time Capsule</span>
+              </div>
+              <div style="font-size: 11px; color: var(--color-outline);">Keep this hidden until a future date</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="create-is-capsule">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group" id="group-unlock-date" style="display: none;">
+            <label class="form-label">Unlock Date</label>
+            <input type="date" id="create-unlock-date" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Hashtags</label>
+            <input type="text" id="create-tags" class="form-control" placeholder="#MountainView #WinterAdventure" value="#MountainView #WinterAdventure" />
+          </div>
+
+          <button type="submit" class="btn-primary-block" style="background-color: var(--color-primary);">➢ Drop Echo</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ECHO DISCUSSION / COMMENTS MODAL -->
+    <div class="modal-overlay" id="modal-echo-discussion">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 style="font-size: 18px; font-weight: 700;">Echo Discussion</h2>
+          <button class="modal-close-btn" onclick="closeDiscussionModal()">✕</button>
+        </div>
+
+        <div id="discussion-post-preview" style="background: var(--color-surface-container-low); padding: 14px; border-radius: var(--radius-md); margin-bottom: 16px;">
+          <!-- Original Post content dynamically populated -->
+        </div>
+
+        <h3 id="discussion-count-header" style="font-size: 14px; font-weight: 700; margin-bottom: 12px; color: var(--color-outline);">12 Echoes</h3>
+
+        <div id="discussion-comments-list">
+          <!-- Comments list dynamically populated -->
+        </div>
+
+        <!-- Add Comment Form -->
+        <form id="form-add-comment" style="margin-top: 16px; display: flex; gap: 8px;">
+          <input type="text" id="input-comment-text" class="form-control" placeholder="Add an Echo..." required style="border-radius: var(--radius-full);" />
+          <button type="submit" class="btn-primary-block" style="width: auto; padding: 10px 18px;">➢</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- EXPEDITION SETTINGS MODAL -->
+    <div class="modal-overlay" id="modal-settings">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <h2 style="font-size: 18px; font-weight: 700;">Expedition Settings</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeSettingsModal()">✕</button>
+        </div>
+
+        <p style="font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 16px;">Configure your traveler profile, unit preferences, and privacy parameters.</p>
+
+        <form id="form-passport-settings">
+          <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-primary); margin-bottom: 12px; border-bottom: 1px solid var(--color-border); padding-bottom: 4px;">Passport & Credentials</div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Username</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <span style="position: absolute; left: 12px; color: var(--color-outline); font-weight: 600;">@</span>
+              <input type="text" id="setting-username" class="form-control" style="padding-left: 28px;" placeholder="username" required />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Full Name</label>
+            <input type="text" id="setting-fullname" class="form-control" placeholder="Full Name" required />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Display Title / Name</label>
+            <input type="text" id="setting-displayname" class="form-control" placeholder="Explorer Title" required />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label">Bio Description</label>
+            <textarea id="setting-bio" class="form-control" rows="2" placeholder="Tell travelers about your journey..."></textarea>
+          </div>
+
+          <!-- Avatar Upload -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Avatar Image</label>
+            <input type="hidden" id="setting-avatarurl" />
+            <input type="file" id="setting-avatar-file" accept="image/*" style="display: none;" />
+            
+            <div style="display: flex; align-items: center; gap: 14px; background: var(--color-surface-container-low); padding: 12px; border-radius: var(--radius-md); border: 1px dashed var(--color-border);">
+              <img id="setting-avatar-preview" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid var(--color-surface);" alt="Avatar Preview" />
+              <div style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 2px;">Profile Photo</div>
+                <div style="font-size: 11px; color: var(--color-outline); margin-bottom: 6px;">Click button below to select an image file</div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn-action-sm" id="btn-upload-avatar" style="background-color: var(--color-primary); font-size: 11px; padding: 5px 12px; border-radius: 6px;">Upload Avatar</button>
+                  <button type="button" class="btn-action-sm" id="btn-remove-avatar" style="background-color: transparent; color: var(--color-tertiary-accent); border: 1px solid var(--color-border); font-size: 11px; padding: 5px 10px; border-radius: 6px; display: none;">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Banner Upload -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Header Banner Image</label>
+            <input type="hidden" id="setting-bannerurl" />
+            <input type="file" id="setting-banner-file" accept="image/*" style="display: none;" />
+            
+            <div style="background: var(--color-surface-container-low); padding: 12px; border-radius: var(--radius-md); border: 1px dashed var(--color-border);">
+              <div style="height: 65px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 8px; position: relative; background: var(--color-surface);">
+                <img id="setting-banner-preview" src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80" style="width: 100%; height: 100%; object-fit: cover;" alt="Banner Preview" />
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11px; color: var(--color-outline);">Expedition cover photo</span>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn-action-sm" id="btn-upload-banner" style="background-color: var(--color-primary); font-size: 11px; padding: 5px 12px; border-radius: 6px;">Upload Banner</button>
+                  <button type="button" class="btn-action-sm" id="btn-remove-banner" style="background-color: transparent; color: var(--color-tertiary-accent); border: 1px solid var(--color-border); font-size: 11px; padding: 5px 10px; border-radius: 6px; display: none;">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Badges & Explorer Tags</label>
+            <input type="text" id="setting-badges" class="form-control" placeholder="#GlobalExplorer #MemoryKeeper" />
+          </div>
+
+          <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-primary); margin-top: 18px; margin-bottom: 12px; border-bottom: 1px solid var(--color-border); padding-bottom: 4px;">Preferences & Privacy</div>
+
+          <div class="switch-row" style="margin-bottom: 14px;">
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Public Visibility</div>
+              <div style="font-size: 11px; color: var(--color-outline);">Visible to other travelers on map</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-visibility" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label">Distance Units</label>
+            <div class="segmented-control">
+              <button type="button" class="tab-btn active" id="unit-miles" onclick="setUnits('Miles')">Miles</button>
+              <button type="button" class="tab-btn" id="unit-km" onclick="setUnits('Kilometers')">Kilometers</button>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label class="form-label">Weather & Temperature Units</label>
+            <div class="segmented-control">
+              <button type="button" class="tab-btn active" id="temp-unit-c" onclick="setTempUnits('Celsius')">°C Celsius</button>
+              <button type="button" class="tab-btn" id="temp-unit-f" onclick="setTempUnits('Fahrenheit')">°F Fahrenheit</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary-block" id="btn-save-passport-settings">Save Profile Settings</button>
+          <button type="button" id="btn-signout" style="width: 100%; text-align: center; color: var(--color-tertiary-accent); font-weight: 600; font-size: 13px; margin-top: 14px; background: none; border: none; cursor: pointer;">Sign Out from All Devices</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAP / DISCOVERY FILTER MODAL -->
+    <div class="modal-overlay" id="modal-filter">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            <h2 style="font-size: 18px; font-weight: 700;">Filter Map & Echoes</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeFilterModal()">✕</button>
+        </div>
+
+        <p style="font-size: 13px; color: var(--color-on-surface-variant); margin-bottom: 16px;">Filter memories and echoes shown on the map and discovery list.</p>
+
+        <form id="form-filter-echoes">
+          <!-- Filter by Type -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px;">Echo Type</label>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+              <button type="button" class="filter-type-btn active" data-type="all">All Echoes</button>
+              <button type="button" class="filter-type-btn" data-type="unlocked">Unlocked Only</button>
+              <button type="button" class="filter-type-btn" data-type="time_capsule">Time Capsules 🔒</button>
+              <button type="button" class="filter-type-btn" data-type="photo">With Photos 📷</button>
+            </div>
+          </div>
+
+          <!-- Filter by Distance / Radius -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label class="form-label" style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px;">Distance Radius</label>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+              <button type="button" class="filter-radius-btn" data-radius="1">1 mi</button>
+              <button type="button" class="filter-radius-btn active" data-radius="5">5 mi</button>
+              <button type="button" class="filter-radius-btn" data-radius="25">25 mi</button>
+              <button type="button" class="filter-radius-btn" data-radius="all">Anywhere</button>
+            </div>
+          </div>
+
+          <!-- Sort By -->
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label class="form-label" style="display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px;">Sort Order</label>
+            <select id="filter-sort-select" class="form-control" style="border-radius: var(--radius-md);">
+              <option value="recent">Most Recent First</option>
+              <option value="distance">Nearest First</option>
+              <option value="popular">Most Liked & Discussed</option>
+            </select>
+          </div>
+
+          <!-- Modal Actions -->
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn-secondary-block" id="btn-reset-filters" style="flex: 1;">Reset</button>
+            <button type="submit" class="btn-primary-block" style="flex: 2;">Apply Filters</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- USER PROFILE MODAL -->
+    <div class="modal-overlay" id="modal-user-profile">
+      <div class="modal-sheet" style="max-height: 88vh; overflow-y: auto;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <h2 style="font-size: 18px; font-weight: 700;">Traveler Profile</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeUserProfileModal()">✕</button>
+        </div>
+
+        <div id="user-profile-modal-body">
+          <!-- Dynamically populated by viewUserProfile -->
+          <div style="text-align: center; padding: 24px; color: var(--color-on-surface-variant);">Loading traveler profile...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- App Frontend Script -->
+  <script src="/app.js"></script>
+</body>
+</html>

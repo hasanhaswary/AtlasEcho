@@ -1,0 +1,11 @@
+{
+  "name": "AtlasEcho",
+  "description": "A location-based social timeline platform where memories and time capsules are left at physical places for fellow travelers to discover.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
